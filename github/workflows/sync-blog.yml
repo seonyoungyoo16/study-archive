@@ -1,0 +1,38 @@
+name: Sync to Tech Blog
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'linux-infra/**' # linux-infra 폴더 안에 글이 올라올 때만 작동합니다.
+      - 'java-spring/**' 
+
+jobs:
+  copy-file:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Source Code
+      uses: actions/checkout@v3
+
+    - name: Push to Blog Repository
+      env:
+        API_TOKEN_GITHUB: ${{ secrets.MY_GITHUB_TOKEN }}
+      run: |
+        mkdir -p repo-to-push
+        cd repo-to-push
+        
+        # 블로그 레포지토리 가져오기
+        git clone https://$API_TOKEN_GITHUB@github.com/seonyoungyoo16/seonyoungyoo16.github.io.git .
+        
+        # study-archive에서 작성한 마크다운 파일들을 블로그 포스트 폴더로 복사
+        # 블로그 프레임워크(Jekyll, Hexo 등)의 포스트 위치(_posts 등)에 맞게 경로를 수정하세요.
+        cp -r ../linux-infra/*.md ./_posts/ 2>/dev/null || true
+        cp -r ../java-spring/*.md ./_posts/ 2>/dev/null || true
+        
+        # 변경 사항 커밋 및 푸시
+        git config --global user.name "seonyoungyoo16"
+        git config --global user.name "GitHub Actions Bot"
+        git add .
+        git commit -m "docs: sync new post from study-archive" || exit 0
+        git push origin main
